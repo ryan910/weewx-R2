@@ -28,42 +28,48 @@ Install `s3cmd` from http://s3tools.org/s3cmd. It is a Python 2.x
 tool so will run fine on the same computer as weeWX. This has been
 tested with s3cmd 2.0.2.
 
-Clone this repo to your weeWX extensions directory; for example
-
-```
-git clone git@github.com:jonotaegi/weewx-s3 /home/weewx/extensions/weewx-s3
-```
-
 ## Installation instructions
 
-1. run the installer
+1. Download the extension
 
   ```
-  cd /home/weewx
-  setup.py install --extension extensions/weewx-s3
+  wget -O weewx-s3.zip https://github.com/jonotaegi/weewx-s3/archive/master.zip
   ```
 
-2. modify the S3 stanza in weewx.conf and set your S3 access
-code, secret token, and bucket name. You will get those when you set
-up the bucket you want to use.
-
-3. restart weeWX:
+2. Install the extension
 
   ```
-  sudo /etc/init.d/weewx stop
-  sudo /etc/init.d/weewx start
+  sudo wee_extension --install weewx-s3.zip
+  ```
+
+3. Configure the extension
+
+  ```
+  sudo wee_config --reconfigure
+  ```
+
+4. Restart weeWX:
+
+  ```
+  sudo /etc/init.d/weewx restart
   ```
 
 ## Manual installation instructions:
 
-1. copy files to the weeWX user directory:
+1. Clones this repo
 
   ```
-  cp -rp skins/s3 /home/weewx/skins
-  cp -rp bin/user/S3 /home/weewx/bin/user
+  git clone git@github.com:jonotaegi/weewx-s3 ~/weewx-s3
   ```
 
-2. add the following to weewx.conf
+2. Copy files to the weeWX user directory:
+
+  ```
+  cp -rp ~/weewx-s3skins/S3 /home/weewx/skins
+  cp -rp ~/weewx-s3bin/user/s3.py /home/weewx/bin/user
+  ```
+
+3. Add the following to weewx.conf
 
   ```
   [StdReport]
@@ -75,8 +81,8 @@ up the bucket you want to use.
           bucket = 'REPLACE_WITH_THE_NAME_OF_YOUR_S3_BUCKET'
   ```
 
-3. start weeWX
+4. Restart weeWX:
 
   ```
-  sudo /etc/init.d/weewx start
+  sudo /etc/init.d/weewx restart
   ```

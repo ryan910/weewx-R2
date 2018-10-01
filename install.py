@@ -23,6 +23,6 @@ class S3Installer(ExtensionInstaller):
                         'access_key': 'REPLACE_WITH_YOUR_S3_ACCESS_KEY',
                         'secret_token': 'REPLACE_WITH_YOUR_SECRET_TOKEN',
                         'bucket': 'REPLACE_WITH_THE_NAME_OF_YOUR_S3_BUCKET', }}},
-            files=[('bin/user', ['bin/user/S3.py']),
-                   ('skins/s3', ['skins/s3/skin.conf'])],
+            files=[('bin/user', ['bin/user/s3.py']),
+                   ('skins/S3', ['skins/S3/skin.conf'])],
         )
