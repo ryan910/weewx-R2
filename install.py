@@ -1,25 +1,28 @@
-# installer for S3 file upload extension
+# Installer for S3 Synchronizer extension
+# Copyright (c) 2018 Jon Otaegi, Bill Madill
+# Distributed under the terms of the GNU Public License (GPLv3)
 
 from setup import ExtensionInstaller
 
-def loader():
-    return S3uploadInstaller()
 
-class S3uploadInstaller(ExtensionInstaller):
+def loader():
+    return S3Installer()
+
+
+class S3Installer(ExtensionInstaller):
     def __init__(self):
-        super(S3uploadInstaller, self).__init__(
+        super(S3Installer, self).__init__(
             version="0.1",
-            name='S3upload',
-            description='Upload files to an S3 bucket',
-            author='Bill Madill',
-            author_email='bill@jamimi.com',
+            name='S3',
+            description='Sync everything in the public_html directory to an Amazon S3 bucket',
+            author='Jon Otaegi',
             config={
                 'StdReport': {
-                    'S3upload': {
-                        'skin': 'S3upload',
+                    'S3': {
+                        'skin': 'S3',
                         'access_key': 'REPLACE_WITH_YOUR_S3_ACCESS_KEY',
-                        'secrect_token': 'REPLACE_WITH_YOUR_SECRET_TOKEN',
-                        'bucket_name': 'REPLACE_WITH_YOUR_S3_BUCKET_NAME',}}},
-            files=[('bin/user', ['bin/user/S3upload.py']),
-                   ('skins/S3upload', ['skins/S3upload/skin.conf'])],
-            )
+                        'secret_token': 'REPLACE_WITH_YOUR_SECRET_TOKEN',
+                        'bucket': 'REPLACE_WITH_THE_NAME_OF_YOUR_S3_BUCKET', }}},
+            files=[('bin/user', ['bin/user/S3.py']),
+                   ('skins/s3', ['skins/s3/skin.conf'])],
+        )
