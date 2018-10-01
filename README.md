@@ -42,13 +42,11 @@ tested with s3cmd 2.0.2.
   sudo wee_extension --install weewx-s3.zip
   ```
 
-3. Configure the extension
+3. Modify the S3 stanza in weewx.conf and set your S3 access code,
+secret token, and bucket name. You will get those when you set up
+the bucket you want to use.
 
-  ```
-  sudo wee_config --reconfigure
-  ```
-
-4. Restart weeWX:
+4. Restart weeWX
 
   ```
   sudo /etc/init.d/weewx restart
@@ -56,13 +54,13 @@ tested with s3cmd 2.0.2.
 
 ## Manual installation instructions:
 
-1. Clones this repo
+1. Clone this repo
 
   ```
   git clone git@github.com:jonotaegi/weewx-s3 ~/weewx-s3
   ```
 
-2. Copy files to the weeWX user directory:
+2. Copy files to the weeWX user directory
 
   ```
   cp -rp ~/weewx-s3skins/S3 /home/weewx/skins
@@ -81,7 +79,7 @@ tested with s3cmd 2.0.2.
           bucket = 'REPLACE_WITH_THE_NAME_OF_YOUR_S3_BUCKET'
   ```
 
-4. Restart weeWX:
+4. Restart weeWX
 
   ```
   sudo /etc/init.d/weewx restart
