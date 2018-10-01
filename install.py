@@ -1,6 +1,6 @@
 # Installer for S3 Synchronizer extension
 # Copyright (c) 2018 Jon Otaegi, Bill Madill
-# Distributed under the terms of the GNU Public License (GPLv3)
+# Distributed under the terms of the GNU Public License (GPLv2)
 
 from setup import ExtensionInstaller
 
@@ -12,7 +12,7 @@ def loader():
 class S3Installer(ExtensionInstaller):
     def __init__(self):
         super(S3Installer, self).__init__(
-            version="0.1",
+            version="2.0",
             name='S3',
             description='Sync everything in the public_html directory to an Amazon S3 bucket',
             author='Jon Otaegi',
