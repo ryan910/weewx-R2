@@ -95,7 +95,7 @@ class S3SyncThread(threading.Thread):
             syslog.syslog(syslog.LOG_INFO, "s3generator: sync started at %s" % timestamp_to_string(start_ts))
 
         # Build command
-        cmd = ["/usr/local/bin/s3cmd"]
+        cmd = ["s3cmd"]
         cmd.extend(["sync"])
         cmd.extend(["--access_key=%s" % self.access_key])
         cmd.extend(["--secret_key=%s" % self.secret_token])
