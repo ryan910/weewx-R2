@@ -66,7 +66,7 @@ class S3Generator(weewx.reportengine.ReportGenerator):
             if log_success:
                 syslog.syslog(syslog.LOG_INFO, "s3generator: successfully configured sync from local folder '%s' to remote bucket '%s'" % (local_root, remote_bucket))
 
-        except KeyError, e:
+        except KeyError as e:
             syslog.syslog(syslog.LOG_ERR, "s3generator: configuration failed - caught exception %s" % e)
 
         syslog.syslog(syslog.LOG_DEBUG, "s3generator: launch separate thread to handle sync")
@@ -111,7 +111,7 @@ class S3SyncThread(threading.Thread):
 
             stdout = S3_cmd.communicate()[0]
             stroutput = stdout.strip()
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 syslog.syslog(syslog.LOG_ERR, "s3generator: s3cmd does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
             raise
@@ -122,14 +122,14 @@ class S3SyncThread(threading.Thread):
                 syslog.syslog(syslog.LOG_DEBUG, "s3generator: s3cmd output: %s" % line)
 
         # S3 output: Generate an appropriate message.
-        if stroutput.find('Done. Uploaded ') >= 0:
+        if stroutput.find(b'Done. Uploaded ') >= 0:
             file_cnt = 0
             for line in iter(stroutput.splitlines()):
-                if line.find('upload:') >= 0:
+                if line.find(b'upload:') >= 0:
                     file_cnt += 1
-                if line.find('Done. Uploaded ') >= 0:
+                if line.find(b'Done. Uploaded ') >= 0:
                     # Get number of bytes uploaded
-                    m = re.search(r"Uploaded (\d*) bytes", line)
+                    m = re.search(b"Uploaded (\d*) bytes", line)
                     if m:
                         byte_cnt = int(m.group(1))
                     else:
