@@ -12,7 +12,7 @@ def loader():
 class S3Installer(ExtensionInstaller):
     def __init__(self):
         super(S3Installer, self).__init__(
-            version="2.0",
+            version="2.1",
             name='S3',
             description='Sync everything in the public_html directory to an Amazon S3 bucket',
             author='Jon Otaegi',
