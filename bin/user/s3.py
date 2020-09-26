@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# S3 Synchronizer plugin for weeWX
+# S3 Synchronizer plugin for WeeWX
 #
 # Copyright (c) 2018 Jon Otaegi, Bill Madill, Tom Keffer
 #
@@ -32,24 +32,53 @@ import errno
 import os.path
 import re
 import subprocess
-import syslog
 import threading
 import time
 
-# Weewx imports:
+# WeeWX imports:
 from weeutil.weeutil import option_as_list, timestamp_to_string, to_bool
 import weewx.manager
+
+try:
+    # WeeWX 4 logging
+    import weeutil.logger
+    import logging
+
+    log = logging.getLogger(__name__)
+
+    def logdbg(msg):
+        log.debug(msg)
+
+    # def loginf(msg):
+    #     log.info(msg)
+
+    def logerr(msg):
+        log.error(msg)
+
+except ImportError:
+    # Old-style WeeWX logging
+    import syslog
+
+
+    def logmsg(level, msg):
+        syslog.syslog(level, 'S3: %s' % msg)
+
+    def logdbg(msg):
+        logmsg(syslog.LOG_DEBUG, msg)
+
+    # def loginf(msg):
+    #     logmsg(syslog.LOG_INFO, msg)
+
+    def logerr(msg):
+        logmsg(syslog.LOG_ERR, msg)
+
 
 # Inherit from the base class ReportGenerator
 class S3Generator(weewx.reportengine.ReportGenerator):
     """Service to sync everything in the public_html subdirectory to an Amazon S3 bucket"""
 
     def run(self):
-        # Determine how much logging is desired
-        log_success = to_bool(self.skin_dict.get('log_success', True))
-
-        if log_success:
-            syslog.syslog(syslog.LOG_INFO, """reportengine: S3Generator""")
+        logdbg("""started""")
 
         try:
             # Get the options from the configuration dictionary.
@@ -63,22 +92,22 @@ class S3Generator(weewx.reportengine.ReportGenerator):
             secret_token = self.skin_dict['secret_token']
             remote_bucket = self.skin_dict['bucket']
 
-            if log_success:
-                syslog.syslog(syslog.LOG_INFO, "s3generator: successfully configured sync from local folder '%s' to remote bucket '%s'" % (local_root, remote_bucket))
+            logdbg("successfully configured sync from local folder '%s' to remote bucket '%s'" % (local_root, remote_bucket))
 
         except KeyError as e:
-            syslog.syslog(syslog.LOG_ERR, "s3generator: configuration failed - caught exception %s" % e)
+            logerr("configuration failed - caught exception %s" % e)
 
-        syslog.syslog(syslog.LOG_DEBUG, "s3generator: launch separate thread to handle sync")
+        logdbg("launch separate thread to handle sync")
 
         # start the thread that captures the pressure value
-        thread = S3SyncThread(self, access_key, secret_token, local_root, remote_bucket, log_success)
+        thread = S3SyncThread(self, access_key, secret_token, local_root, remote_bucket)
         thread.start()
+
 
 class S3SyncThread(threading.Thread):
     """Syncs a directory (and all its descendants) to an Amazon Web Services (AWS) S3 bucket."""
 
-    def __init__(self, service, access_key, secret_token, local_root, remote_bucket, log_success):
+    def __init__(self, service, access_key, secret_token, local_root, remote_bucket):
         threading.Thread.__init__(self)
         self.service = service
 
@@ -86,13 +115,11 @@ class S3SyncThread(threading.Thread):
         self.secret_token = secret_token
         self.local_root = local_root
         self.remote_bucket = remote_bucket
-        self.log_success = log_success
 
     def run(self):
         start_ts = time.time()
 
-        if self.log_success:
-            syslog.syslog(syslog.LOG_INFO, "s3generator: sync started at %s" % timestamp_to_string(start_ts))
+        logdbg("sync started at %s" % timestamp_to_string(start_ts))
 
         # Build command
         cmd = ["s3cmd"]
@@ -104,7 +131,7 @@ class S3SyncThread(threading.Thread):
         cmd.extend([self.local_root])
         cmd.extend(["s3://%s" % self.remote_bucket])
 
-        syslog.syslog(syslog.LOG_DEBUG, "s3generator: executing command: %s" % cmd)
+        logdbg("executing command: %s" % cmd)
 
         try:
             S3_cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -113,13 +140,12 @@ class S3SyncThread(threading.Thread):
             stroutput = stdout.strip()
         except OSError as e:
             if e.errno == errno.ENOENT:
-                syslog.syslog(syslog.LOG_ERR, "s3generator: s3cmd does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
+                logerr("s3cmd does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
             raise
 
-        if weewx.debug == 1:
-            syslog.syslog(syslog.LOG_DEBUG, "s3generator: s3cmd output: %s" % stroutput)
-            for line in iter(stroutput.splitlines()):
-                syslog.syslog(syslog.LOG_DEBUG, "s3generator: s3cmd output: %s" % line)
+        logdbg("s3cmd output: %s" % stroutput)
+        for line in iter(stroutput.splitlines()):
+            logdbg("s3cmd output: %s" % line)
 
         # S3 output: Generate an appropriate message.
         if stroutput.find(b'Done. Uploaded ') >= 0:
@@ -145,12 +171,12 @@ class S3SyncThread(threading.Thread):
                 S3_message = "executed in %0.2f seconds"
         else:
             # Looks like we have an s3cmd error so display a message
-            syslog.syslog(syslog.LOG_ERR, "s3generator: s3cmd reported errors")
+            logerr("s3cmd reported errors")
             for line in iter(stroutput.splitlines()):
-                syslog.syslog(syslog.LOG_ERR, "s3generator: s3cmd error: %s" % line)
+                logerr("s3cmd error: %s" % line)
             S3_message = "executed in %0.2f seconds"
 
         stop_ts = time.time()
-        if self.log_success:
-            syslog.syslog(syslog.LOG_INFO, "s3generator: " + S3_message % (stop_ts - start_ts))
-            syslog.syslog(syslog.LOG_INFO, "s3generator: sync ended at %s" % timestamp_to_string(stop_ts))
+
+        logdbg(S3_message % (stop_ts - start_ts))
+        logdbg("sync ended at %s" % timestamp_to_string(stop_ts))
