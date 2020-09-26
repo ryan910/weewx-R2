@@ -59,8 +59,8 @@ the bucket you want to use.
 2. Copy files to the weeWX user directory
 
   ```
-  cp -rp ~/weewx-s3skins/S3 /home/weewx/skins
-  cp -rp ~/weewx-s3bin/user/s3.py /home/weewx/bin/user
+  cp -rp ~/weewx-s3/skins/S3 /home/weewx/skins
+  cp -rp ~/weewx-s3/bin/user/s3.py /home/weewx/bin/user
   ```
 
 3. Add the following to weewx.conf
