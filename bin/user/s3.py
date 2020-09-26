@@ -77,7 +77,7 @@ class S3Generator(weewx.reportengine.ReportGenerator):
     """Service to sync everything in the public_html subdirectory to an Amazon S3 bucket"""
 
     def run(self):
-        logdbg("configuration started")
+        logdbg("Reading properties from the configuration dictionary")
 
         try:
             # Get the options from the configuration dictionary.
@@ -91,15 +91,15 @@ class S3Generator(weewx.reportengine.ReportGenerator):
             secret_token = self.skin_dict['secret_token']
             remote_bucket = self.skin_dict['bucket']
 
-            logdbg("successfully configured sync from local folder '%s' to remote bucket '%s'" % (local_root, remote_bucket))
+            logdbg("Successfully configured sync from local folder '%s' to remote bucket '%s'" % (local_root, remote_bucket))
 
         except KeyError as e:
-            loginf("configuration failed - caught exception %s" % e)
+            loginf("Configuration failed - caught exception %s" % e)
             exit(1)
 
-        logdbg("launch separate thread to handle sync")
+        logdbg("Launch separate thread to handle sync")
 
-        # start the thread that captures the pressure value
+        # Start a separate thread to prevent blocking the main loop thread:
         thread = S3SyncThread(self, access_key, secret_token, local_root, remote_bucket)
         thread.start()
 
@@ -119,7 +119,7 @@ class S3SyncThread(threading.Thread):
     def run(self):
         start_ts = time.time()
 
-        logdbg("sync started at %s" % timestamp_to_string(start_ts))
+        logdbg("Sync started at %s" % timestamp_to_string(start_ts))
 
         # Build command
         cmd = ["s3cmd"]
@@ -131,7 +131,7 @@ class S3SyncThread(threading.Thread):
         cmd.extend([self.local_root])
         cmd.extend(["s3://%s" % self.remote_bucket])
 
-        logdbg("executing command: %s" % cmd)
+        logdbg("Executing command: %s" % cmd)
 
         try:
             S3_cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -140,12 +140,12 @@ class S3SyncThread(threading.Thread):
             stroutput = stdout.strip()
         except OSError as e:
             if e.errno == errno.ENOENT:
-                loginf("s3cmd does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
+                loginf("S3cmd does not appear to be installed on this system (errno %d, \"%s\")" % (e.errno, e.strerror))
                 exit(1)
 
-        logdbg("s3cmd output: %s" % stroutput)
+        logdbg("S3cmd output: %s" % stroutput)
         for line in iter(stroutput.splitlines()):
-            logdbg("s3cmd output: %s" % line)
+            logdbg("S3cmd output: %s" % line)
 
         # S3 output: Generate an appropriate message.
         if stroutput.find(b'Done. Uploaded ') >= 0:
@@ -164,19 +164,19 @@ class S3SyncThread(threading.Thread):
             # Format message
             try:
                 if file_cnt is not None and byte_cnt is not None:
-                    S3_message = "synced %d files (%s bytes) in %%0.2f seconds" % (int(file_cnt), byte_cnt)
+                    S3_message = "Synced %d files (%s bytes) in %%0.2f seconds" % (int(file_cnt), byte_cnt)
                 else:
-                    S3_message = "executed in %0.2f seconds"
+                    S3_message = "Executed in %0.2f seconds"
             except:
-                S3_message = "executed in %0.2f seconds"
+                S3_message = "Executed in %0.2f seconds"
         else:
-            # Looks like we have an s3cmd error so display a message
-            logerr("s3cmd reported errors")
+            # Looks like we have an S3cmd error so display a message
+            logerr("S3cmd reported errors")
             for line in iter(stroutput.splitlines()):
-                logerr("s3cmd error: %s" % line)
-            S3_message = "executed in %0.2f seconds"
+                logerr("S3cmd error: %s" % line)
+            S3_message = "Executed with errors in %0.2f seconds"
 
         stop_ts = time.time()
 
         loginf(S3_message % (stop_ts - start_ts))
-        logdbg("sync ended at %s" % timestamp_to_string(stop_ts))
+        logdbg("Sync ended at %s" % timestamp_to_string(stop_ts))
