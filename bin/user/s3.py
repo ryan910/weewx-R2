@@ -49,8 +49,8 @@ try:
     def logdbg(msg):
         log.debug(msg)
 
-    # def loginf(msg):
-    #     log.info(msg)
+    def loginf(msg):
+        log.info(msg)
 
     def logerr(msg):
         log.error(msg)
@@ -59,15 +59,14 @@ except ImportError:
     # Old-style WeeWX logging
     import syslog
 
-
     def logmsg(level, msg):
         syslog.syslog(level, 'S3: %s' % msg)
 
     def logdbg(msg):
         logmsg(syslog.LOG_DEBUG, msg)
 
-    # def loginf(msg):
-    #     logmsg(syslog.LOG_INFO, msg)
+    def loginf(msg):
+        logmsg(syslog.LOG_INFO, msg)
 
     def logerr(msg):
         logmsg(syslog.LOG_ERR, msg)
@@ -78,7 +77,7 @@ class S3Generator(weewx.reportengine.ReportGenerator):
     """Service to sync everything in the public_html subdirectory to an Amazon S3 bucket"""
 
     def run(self):
-        logdbg("""started""")
+        logdbg("configuration started")
 
         try:
             # Get the options from the configuration dictionary.
@@ -95,7 +94,8 @@ class S3Generator(weewx.reportengine.ReportGenerator):
             logdbg("successfully configured sync from local folder '%s' to remote bucket '%s'" % (local_root, remote_bucket))
 
         except KeyError as e:
-            logerr("configuration failed - caught exception %s" % e)
+            loginf("configuration failed - caught exception %s" % e)
+            exit(1)
 
         logdbg("launch separate thread to handle sync")
 
@@ -140,8 +140,8 @@ class S3SyncThread(threading.Thread):
             stroutput = stdout.strip()
         except OSError as e:
             if e.errno == errno.ENOENT:
-                logerr("s3cmd does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
-            raise
+                loginf("s3cmd does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
+                exit(1)
 
         logdbg("s3cmd output: %s" % stroutput)
         for line in iter(stroutput.splitlines()):
@@ -164,7 +164,7 @@ class S3SyncThread(threading.Thread):
             # Format message
             try:
                 if file_cnt is not None and byte_cnt is not None:
-                    S3_message = "sync'd %d files (%s bytes) in %%0.2f seconds" % (int(file_cnt), byte_cnt)
+                    S3_message = "synced %d files (%s bytes) in %%0.2f seconds" % (int(file_cnt), byte_cnt)
                 else:
                     S3_message = "executed in %0.2f seconds"
             except:
@@ -178,5 +178,5 @@ class S3SyncThread(threading.Thread):
 
         stop_ts = time.time()
 
-        logdbg(S3_message % (stop_ts - start_ts))
+        loginf(S3_message % (stop_ts - start_ts))
         logdbg("sync ended at %s" % timestamp_to_string(stop_ts))
