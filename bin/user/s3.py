@@ -90,6 +90,7 @@ class S3Generator(weewx.reportengine.ReportGenerator):
             access_key = self.skin_dict['access_key']
             secret_token = self.skin_dict['secret_token']
             remote_bucket = self.skin_dict['bucket']
+            account_url = self.skin_dict['account_url']
 
             logdbg("Successfully configured sync from local folder '%s' to remote bucket '%s'" % (local_root, remote_bucket))
 
@@ -107,7 +108,7 @@ class S3Generator(weewx.reportengine.ReportGenerator):
 class S3SyncThread(threading.Thread):
     """Syncs a directory (and all its descendants) to an Amazon Web Services (AWS) S3 bucket."""
 
-    def __init__(self, service, access_key, secret_token, local_root, remote_bucket):
+    def __init__(self, service, access_key, secret_token, local_root, remote_bucket, account_url):
         threading.Thread.__init__(self)
         self.service = service
 
@@ -115,6 +116,7 @@ class S3SyncThread(threading.Thread):
         self.secret_token = secret_token
         self.local_root = local_root
         self.remote_bucket = remote_bucket
+        self.account_url = account_url
 
     def run(self):
         start_ts = time.time()
@@ -127,7 +129,9 @@ class S3SyncThread(threading.Thread):
         cmd.extend(["--access_key=%s" % self.access_key])
         cmd.extend(["--secret_key=%s" % self.secret_token])
         cmd.extend(["--no-mime-magic"])
-        cmd.extend(["--storage-class=REDUCED_REDUNDANCY"])
+        cmd.extend(["--region=auto"])
+        cmd.extend(["--host=%s" % self.account_url])
+        cmd.extend(["--host-bucket=%s" % self.account_url])
         cmd.extend([self.local_root])
         cmd.extend(["s3://%s" % self.remote_bucket])
 
