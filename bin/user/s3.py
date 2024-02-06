@@ -127,7 +127,7 @@ class S3SyncThread(threading.Thread):
         cmd.extend(["--access_key=%s" % self.access_key])
         cmd.extend(["--secret_key=%s" % self.secret_token])
         cmd.extend(["--no-mime-magic"])
-        cmd.extend(["--storage-class=REDUCED_REDUNDANCY"])
+        cmd.extend(["--storage-class=STANDARD"])
         cmd.extend([self.local_root])
         cmd.extend(["s3://%s" % self.remote_bucket])
 
